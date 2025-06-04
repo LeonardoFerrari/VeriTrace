@@ -112,15 +112,6 @@ jobs:
       run: |
         python -m build
 
-    - name: Publish to PyPI
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-      run: |
-        # Uncomment when ready to publish to PyPI
-        # twine upload dist/*
-        echo "Package ready for PyPI publication"
-
   notify:
     runs-on: ubuntu-latest
     needs: [deploy-homologation, deploy-production]
