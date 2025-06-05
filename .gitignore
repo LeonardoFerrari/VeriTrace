@@ -63,3 +63,23 @@ lakefs_data/
 # temp
 tmp/
 temp/
+
+# SonarQube
+.sonar/
+.scannerwork/
+sonar-scanner.properties
+sonar-project.properties.bak
+
+# Test / reports
+htmlcov/
+test-results.xml
+junit.xml
+pytest.xml
+.pytest_cache/
+.tox/
+
+# Coverage
+coverage.xml
+.coverage.*
+coverage/
+.nyc_output
