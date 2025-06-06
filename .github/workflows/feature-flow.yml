@@ -38,4 +38,4 @@ jobs:
           base: "develop" # Target branch
           branch: "${{ github.ref_name }}" # Source branch
           labels: "automated-pr, feature"
-          reviewers: "AlfredoFilho" 
+          # reviewers: "AlfredoFilho" 
