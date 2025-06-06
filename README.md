@@ -73,3 +73,4 @@ Desenvolver uma plataforma inteligente e descentralizada de confiabilidade de da
 * **Catalogação e Visualização:** Metabase, Superset.
 * **Infraestrutura de Testes:** AWS Free Tier. 
 * **Linguagem de Programação:** Python.
+
