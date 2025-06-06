@@ -30,6 +30,9 @@ jobs:
 
   create-pr-to-main:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     needs: [deploy-homologation]
     if: success()
     steps:
