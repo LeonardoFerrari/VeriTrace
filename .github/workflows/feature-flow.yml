@@ -1,0 +1,41 @@
+name: Feature Workflow
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+
+jobs:
+  validate-and-create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install security dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install safety bandit
+
+      - name: Run security scan with Safety
+        run: safety check || true
+
+      - name: Run security analysis with Bandit
+        run: bandit -r . || true
+
+      - name: Create Pull Request to Develop
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "feat: Automatic PR from feature branch"
+          title: "PR from ${{ github.head_ref || github.ref_name }} into develop"
+          body: "This PR was automatically created from the branch `${{ github.ref_name }}`. Please review the changes for inclusion into the develop branch."
+          base: "develop" # Target branch
+          branch: "${{ github.ref_name }}" # Source branch
+          labels: "automated-pr, feature"
+          reviewers: "AlfredoFilho" 

@@ -1,0 +1,44 @@
+name: Develop Workflow
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  test-and-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests with pytest
+        run: |
+          pytest --cov=src --cov-report=xml
+
+      - name: Get next version from commits
+        id: semantic_version
+        uses: paulhatch/semantic-version@v5.4
+        with:
+          minor_pattern: "^(feat|refactor)(\\([\\w\\s]*\\))?:"
+          patch_pattern: "^(fix|perf|docs|style|chore|build|ci)(\\([\\w\\s]*\\))?:"
+          tag_prefix: "v"
+
+      - name: Create Release Branch
+        run: |
+          git checkout -b release/${{ steps.semantic_version.outputs.version }}
+          git push origin release/${{ steps.semantic_version.outputs.version }}
