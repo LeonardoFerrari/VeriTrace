@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -31,14 +33,23 @@ jobs:
       - name: Run security analysis with Bandit
         run: bandit -r . || true
 
+      - name: Check if PR already exists
+        id: check-pr
+        run: |
+          PR_EXISTS=$(gh pr list --base develop --head ${{ github.ref_name }} --json number --jq length)
+          echo "pr_exists=$PR_EXISTS" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create Pull Request to Develop
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "feat: Automatic PR from feature branch"
-          title: "PR from ${{ github.head_ref || github.ref_name }} into develop"
-          body: "This PR was automatically created from the branch `${{ github.ref_name }}`. Please review the changes for inclusion into the develop branch."
-          base: "develop" # Target branch
-          branch: "${{ github.ref_name }}" # Source branch
-          labels: "automated-pr, feature"
-          reviewers: "AlfredoFilho" 
+        if: steps.check-pr.outputs.pr_exists == '0'
+        run: |
+          gh pr create \
+            --base develop \
+            --head ${{ github.ref_name }} \
+            --title "PR from ${{ github.ref_name }} into develop" \
+            --body "This PR was automatically created from the branch \`${{ github.ref_name }}\`. Please review the changes for inclusion into the develop branch." \
+            --label "automated-pr,feature" \
+            --reviewer "AlfredoFilho"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
