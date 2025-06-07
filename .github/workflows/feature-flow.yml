@@ -34,13 +34,13 @@ jobs:
         run: bandit -r . || true
 
       - name: Create Pull Request to Develop
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "feat: Automatic PR from feature branch"
-          title: "PR from ${{ github.head_ref || github.ref_name }} into develop"
-          body: "This PR was automatically created from the branch `${{ github.ref_name }}`. Please review the changes for inclusion into the develop branch."
-          base: "develop" # Target branch
-          branch: "${{ github.ref_name }}" # Source branch
-          labels: "automated-pr, feature"
-          reviewers: "AlfredoFilho" 
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base develop \
+            --head ${{ github.ref_name }} \
+            --title "PR from ${{ github.ref_name }} into develop" \
+            --body "This PR was automatically created from the branch `${{ github.ref_name }}`. Please review the changes for inclusion into the develop branch." \
+            --reviewer AlfredoFilho \
+            --label automated-pr,feature
