@@ -9,11 +9,13 @@ jobs:
   validate-and-create-pr:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -31,29 +33,14 @@ jobs:
       - name: Run security analysis with Bandit
         run: bandit -r . || true
 
-      - name: Check if PR already exists
-        id: check-pr
-        run: |
-          BRANCH_NAME="${{ github.ref_name }}"
-          PR_EXISTS=$(gh pr list --head "$BRANCH_NAME" --base develop --json number --jq length)
-          echo "pr_exists=$PR_EXISTS" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Create Pull Request to Develop
-        if: steps.check-pr.outputs.pr_exists == '0'
-        run: |
-          gh pr create \
-            --title "PR from ${{ github.ref_name }} into develop" \
-            --body "This PR was automatically created from the branch \`${{ github.ref_name }}\`. Please review the changes for inclusion into the develop branch." \
-            --base develop \
-            --head ${{ github.ref_name }} \
-            --label "automated-pr,feature" \
-            --reviewer AlfredoFilho
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: PR already exists
-        if: steps.check-pr.outputs.pr_exists != '0'
-        run: |
-          echo "Pull request already exists for branch ${{ github.ref_name }}"
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "feat: Automatic PR from feature branch"
+          title: "PR from ${{ github.head_ref || github.ref_name }} into develop"
+          body: "This PR was automatically created from the branch `${{ github.ref_name }}`. Please review the changes for inclusion into the develop branch."
+          base: "develop" # Target branch
+          branch: "${{ github.ref_name }}" # Source branch
+          labels: "automated-pr, feature"
+          reviewers: "AlfredoFilho" 
