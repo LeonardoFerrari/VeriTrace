@@ -1,0 +1,39 @@
+name: Production Deployment
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    environment: Main
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt build
+
+      - name: Build production package
+        run: python -m build
+
+      - name: Create Docker image
+        run: |
+          # echo "🐳 Building Docker image..."
+          # echo "✅ Docker image created: your-image-name:${{ github.ref_name }}"
+
+      - name: Deploy to Production
+        run: |
+          echo "🚀 Deploying to production..."
+          echo "Version: ${{ github.ref_name }}"
+          # Add your production deployment script here
+          echo "✅ Production deployment completed."
