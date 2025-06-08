@@ -41,6 +41,6 @@ jobs:
             --base develop \
             --head ${{ github.ref_name }} \
             --title "PR from ${{ github.ref_name }} into develop" \
-            --body "This PR was automatically created from the branch `${{ github.ref_name }}`. Please review the changes for inclusion into the develop branch." \
+            --body "This PR was automatically created from the branch ${{ github.ref_name }}. Please review the changes for inclusion into the develop branch." \
             --reviewer AlfredoFilho \
             --label automated-pr,feature
