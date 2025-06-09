@@ -1,5 +1,5 @@
 """
-Módulo de Ingestão de Dados Excel
+Módulo de Ingestão de Dados CSV
 """
 import logging
 import pandas as pd
@@ -8,8 +8,8 @@ from typing import Dict, Any, Optional
 from ..core.exceptions import IngestionError
 
 
-class ExcelIngestion:
-    """Gerencia a ingestão de arquivos Excel com validação e tratamento de erros"""
+class CSVIngestion:
+    """Gerencia ingestão de arquivos CSV com validação e tratamento de erros"""
     
     def __init__(self, config):
         self.config = config
@@ -19,50 +19,41 @@ class ExcelIngestion:
     
     def ingest(self, file_path: str, **kwargs) -> Dict[str, Any]:
         """
-        Ingere arquivo Excel e converte para formato otimizado
+        Ingere arquivo CSV e converte para formato otimizado
         
         Args:
-            file_path: Caminho do arquivo Excel
-            **kwargs: Parâmetros adicionais do pandas read_excel
+            file_path: Caminho do arquivo CSV
+            **kwargs: Parâmetros adicionais para pandas read_csv
             
         Returns:
             Dicionário com resultados da ingestão
         """
         try:
-            self.logger.info(f"Iniciando ingestão do Excel: {file_path}")
+            self.logger.info(f"Iniciando ingestão CSV: {file_path}")
             
             # Valida se o arquivo existe
             if not Path(file_path).exists():
-                raise IngestionError(f"Arquivo Excel não encontrado: {file_path}")
+                raise IngestionError(f"Arquivo CSV não encontrado: {file_path}")
             
-            # Lê o Excel com tratamento de erro
+            # Lê o CSV com tratamento de erro
             try:
-                # Obtém o nome da planilha se especificado, senão usa a primeira
-                sheet_name = kwargs.get('sheet_name', 0)
-                df = pd.read_excel(file_path, sheet_name=sheet_name, **{k: v for k, v in kwargs.items() if k != 'sheet_name'})
+                df = pd.read_csv(file_path, **kwargs)
             except Exception as e:
-                raise IngestionError(f"Falha ao ler o arquivo Excel: {str(e)}")
+                raise IngestionError(f"Falha ao ler arquivo CSV: {str(e)}")
             
             # Validação básica
             if df.empty:
-                raise IngestionError("Arquivo Excel está vazio")
-            
-            # Limpa nomes das colunas (remove espaços extras, caracteres especiais)
-            df.columns = df.columns.astype(str).str.strip()
+                raise IngestionError("Arquivo CSV está vazio")
             
             # Gera caminho de saída
             input_name = Path(file_path).stem
-            sheet_suffix = f"_{sheet_name}" if isinstance(sheet_name, str) and sheet_name != 0 else ""
-            output_path = self.staging_path / f"{input_name}{sheet_suffix}.parquet"
+            output_path = self.staging_path / f"{input_name}.parquet"
             
             # Salva como Parquet para melhor performance
             df.to_parquet(output_path, index=False)
             
             # Calcula estatísticas básicas
             stats = self._calculate_stats(df)
-            
-            # Obtém informações das planilhas
-            sheet_info = self._get_sheet_info(file_path)
             
             result = {
                 'source_file': file_path,
@@ -73,17 +64,15 @@ class ExcelIngestion:
                 'column_names': list(df.columns),
                 'data_types': df.dtypes.to_dict(),
                 'statistics': stats,
-                'sheet_info': sheet_info,
-                'processed_sheet': sheet_name,
                 'file_size_mb': Path(file_path).stat().st_size / (1024 * 1024)
             }
             
-            self.logger.info(f"Ingestão do Excel concluída: {len(df)} linhas, {len(df.columns)} colunas")
+            self.logger.info(f"Ingestão CSV concluída: {len(df)} linhas, {len(df.columns)} colunas")
             return result
             
         except Exception as e:
-            self.logger.error(f"Ingestão do Excel falhou: {str(e)}")
-            raise IngestionError(f"Ingestão do Excel falhou: {str(e)}")
+            self.logger.error(f"Ingestão CSV falhou: {str(e)}")
+            raise IngestionError(f"Ingestão CSV falhou: {str(e)}")
     
     def _calculate_stats(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Calcula estatísticas básicas do dataframe"""
@@ -103,15 +92,3 @@ class ExcelIngestion:
             stats['numeric_summary'] = df[numeric_cols].describe().to_dict()
         
         return stats
-    
-    def _get_sheet_info(self, file_path: str) -> Dict[str, Any]:
-        """Obtém informações sobre todas as planilhas do arquivo Excel"""
-        try:
-            excel_file = pd.ExcelFile(file_path)
-            return {
-                'sheet_names': excel_file.sheet_names,
-                'total_sheets': len(excel_file.sheet_names)
-            }
-        except Exception as e:
-            self.logger.warning(f"Não foi possível obter informações das planilhas: {str(e)}")
-            return {'sheet_names': ['Desconhecido'], 'total_sheets': 1}
