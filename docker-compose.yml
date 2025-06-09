@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  veritrace-api:
+    build: .
+    
+    container_name: veritrace_api
+    
+    ports:
+      - "8000:8000"
+      
+    # hot-reloading
+    # reflete mudanças no código sem reiniciar o container
+    volumes:
+      - .:/app
+      
+    # Override CMD no Dockerfile pra habilitar --reload em development
+    command: uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
